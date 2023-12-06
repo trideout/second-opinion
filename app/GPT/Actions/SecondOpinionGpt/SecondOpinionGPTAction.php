@@ -4,6 +4,7 @@ namespace App\GPT\Actions\SecondOpinionGpt;
 
 use App\Models\Analysis;
 use App\Models\Message;
+use App\Models\Opinion;
 use MalteKuhr\LaravelGPT\GPTAction;
 use Closure;
 
@@ -19,7 +20,12 @@ class SecondOpinionGPTAction extends GPTAction
      */
     public function systemMessage(): ?string
     {
-        return 'Determine on a scale of 1 to 3 how time critical a response
+        return '
+        Previous Messages: ' . Opinion::all()->toJson() . '
+
+
+        Given the above previous decisions on urgency, as a secretary working for a
+            therapist determine on a scale of 1 to 3 how time critical a response
             to the message from a client to a therapist is. 1 would be casual
             or followup from a client. 2 should be addressed before the
             clients next session. 3 represents an urgent message that should
