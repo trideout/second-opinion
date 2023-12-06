@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OpinionStoreRequest;
+use App\Models\Message;
 use App\Models\Opinion;
 use Illuminate\Http\Request;
 
@@ -39,16 +41,16 @@ class OpinionController extends Controller
      *     @OA\Response(response=400, description="Invalid request")
      * )
      */
-    public function store(Request $request)
+    public function store(OpinionStoreRequest $request)
     {
-        $request->validate([
-            'message' => 'required',
-            'urgency' => 'required|integer|between:1,3'
+        $message = Message::find($request->message_id);
+        $message->update([
+            'interpreted_value' => $request->urgency,
         ]);
 
         $opinion = Opinion::create([
-            'message' => $request['message'],
-            'urgency' => $request['urgency'],
+            'message' => $request->message,
+            'urgency' => $request->urgency,
         ]);
 
         return response()->json($opinion);
