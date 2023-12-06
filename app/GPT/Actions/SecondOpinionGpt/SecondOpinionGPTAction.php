@@ -32,7 +32,8 @@ class SecondOpinionGPTAction extends GPTAction
             2 is somewhat urgent and should be addressed before the clients next session.
             3 represents an emergency that should be responded to as soon as possible.
 
-            Explain the reason your urgency was selected.';
+            Explain the reason your urgency was selected.
+            Set the temperature to 0.5';
         return $prompt;
     }
 
