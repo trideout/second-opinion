@@ -52,7 +52,7 @@ class SecondOpinionGPTAction extends GPTAction
             $this->message->analysis()->create([
                 'provider' => Analysis::PROVIDER_GPT4,
                 'raw_response' => $urgency,
-                'interpreted_value' => $urgency, //Pending interpreter implementation
+                'interpreted_value' => 0,
                 'llm_reasoning' => $reason,
             ]);
         };
