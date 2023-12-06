@@ -137,6 +137,44 @@
                     }
                 }
             }
+        },
+        "/api/opinions": {
+            "post": {
+                "tags": [
+                    "Opinions"
+                ],
+                "summary": "Create a new opinion",
+                "description": "Create a new opinion to help train the llm in future analyses.",
+                "operationId": "b34e8abeb7155efc02ba269d1d797544",
+                "parameters": [
+                    {
+                        "name": "message",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "I'm feeling great today!"
+                    },
+                    {
+                        "name": "urgency",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": "1"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    }
+                }
+            }
         }
     }
 }
