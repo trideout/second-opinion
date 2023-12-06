@@ -24,6 +24,7 @@ return new class extends Migration
             $table->integer('provider');
             $table->text('raw_response');
             $table->text('interpreted_value');
+            $table->text('llm_reasoning');
             $table->timestamps();
         });
     }

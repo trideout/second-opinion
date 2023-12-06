@@ -16,6 +16,7 @@ class Analysis extends Model
         'provider',
         'raw_response',
         'interpreted_value',
+        'llm_reasoning',
     ];
 
     public function message(): BelongsTo {

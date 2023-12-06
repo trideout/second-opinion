@@ -20,17 +20,17 @@ class SecondOpinionGPTAction extends GPTAction
      */
     public function systemMessage(): ?string
     {
-        return '
-        Previous Messages: ' . Opinion::all()->toJson() . '
+        $prompt = '
+            Previous Decisions: ' . Opinion::all()->toJson() . '
 
-
-        Given the above previous decisions on urgency, as a secretary working for a
+            Given the above previous decisions on urgency, and assuming that the patient has a
+            session scheduled within 2 weeks, as a secretary working for a
             therapist determine on a scale of 1 to 3 how time critical a response
-            to the message from a client to a therapist is. 1 would be casual
-            or followup from a client. 2 should be addressed before the
-            clients next session. 3 represents an urgent message that should
-            be responded to as soon as possible. If the message indicates
-            a high likelihood of self harm, flag that ideation as true.';
+            to the message from a client to a therapist is. 1 would be basic communication
+            from a client. 2 is somewhat urgent and should be addressed before the
+            clients next session. 3 represents an emergency that should
+            be responded to as soon as possible. Explain the reason the urgency was selected.';
+        return $prompt;
     }
 
     /**
@@ -44,13 +44,14 @@ class SecondOpinionGPTAction extends GPTAction
      */
     public function function(): Closure
     {
-        return function ($urgency, $ideation = false): mixed {
+        return function ($urgency, $reason): mixed {
             $this->message->analysis()->create([
-                'provider' => Analysis::PROVIDER_GPT35,
+                'provider' => Analysis::PROVIDER_GPT4,
                 'raw_response' => $urgency,
                 'interpreted_value' => $urgency,
+                'llm_reasoning' => $reason,
             ]);
-            return ['urgency' => $urgency, 'ideation' => $ideation];
+            return ['urgency' => $urgency, 'reason' => $reason];
         };
     }
 
@@ -64,8 +65,8 @@ class SecondOpinionGPTAction extends GPTAction
     public function rules(): array
     {
         return [
-            'urgency' => 'required|integer',
-            'ideation' => 'boolean'
+            'urgency' => 'required|integer|IN:1,2,3',
+            'reason' => 'required|string',
         ];
     }
 }
