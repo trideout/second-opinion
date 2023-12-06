@@ -64,8 +64,6 @@ export function Chat() {
       setMessages(previous => {
         const existing = previous.find(({ content }) => content === message.content)
 
-        console.log(message.content)
-
         if (existing) {
           // analysis came in
           return previous.map(m => {
@@ -146,7 +144,7 @@ export function Chat() {
                   author !== currentUserId && isTherapist && (
                     <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
                       {/* @ts-expect-error */}
-                      {analysis?.value > -1
+                      {(console.log(analysis), analysis?.value > -1)
                         ? (
                           <button type="button" onClick={() => {
                             setDrawerMessage(message)
@@ -244,6 +242,7 @@ export function Chat() {
 
             ;(async () => {
               const json = await sendMessage(newMessage)
+
               const message = await getMessage(json.id)
 
               channel.current?.postMessage({
@@ -254,7 +253,7 @@ export function Chat() {
                 timestamp: new Date(message.created_at).getTime(),
                 analysis: message.analysis
                   ? {
-                    value: Number(message.analysis.interpreted_value),
+                    value: Number(message.analysis.raw_response),
                     reasoning: message.analysis.llm_reasoning,
                   }
                   : {
@@ -511,7 +510,7 @@ async function getMessages() {
     timestamp: new Date(created_at).getTime(),
     analysis: analysis
       ? {
-        value: Number(analysis.interpreted_value),
+        value: Number(analysis.interpreted_value !== '0' ? analysis.interpreted_value : analysis.raw_response),
         reasoning: analysis.llm_reasoning,
       }
       : {
