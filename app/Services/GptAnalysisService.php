@@ -1,9 +1,31 @@
 <?php
 namespace App\Services;
 
+use App\Models\Analysis;
+use App\Models\Message;
+
 class GptAnalysisService implements AnalysisInterface {
-    public function processMessage(\App\Models\Message $message)
+    protected Message $message;
+    protected $response;
+    public function processMessage(Message $message): Analysis
     {
-        // TODO: Implement processMessage() method.
+        $this->message = $message;
+        $this->sendToGpt();
+        $this->analyseResponse();
+        return $this->createResponseRecord();
     }
+
+    protected function sendToGpt(): void {
+
+    }
+
+    protected function analyseResponse(): void {
+
+    }
+
+    protected function createResponseRecord(): Analysis {
+        $analysis = Analysis::create([]);
+        return $analysis;
+    }
+
 }

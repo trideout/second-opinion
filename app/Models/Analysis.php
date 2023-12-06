@@ -10,6 +10,8 @@ class Analysis extends Model
 {
     use HasFactory;
 
+    const PROVIDER_GPT35 = 1;
+    const PROVIDER_GPT4 = 2;
     protected $fillable = [
         'provider',
         'raw_response',
