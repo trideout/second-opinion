@@ -42,4 +42,9 @@ class MessageController extends Controller
         $message->delete();
         return response()->json(['success' => true]);
     }
+
+    public function show(Message $message)
+    {
+        return response()->json($message);
+    }
 }
