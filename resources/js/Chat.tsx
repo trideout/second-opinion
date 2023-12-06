@@ -4,7 +4,7 @@ import useListRef from './useListRef';
 import { nanoid } from 'nanoid';
 
 type Message = {
-  id: string,
+  id: number,
   content: string,
   author: string,
   timestamp: number,
@@ -21,7 +21,7 @@ type User = {
 }
 
 function getMessageId() {
-  return nanoid();
+  return -1 * Math.floor(Math.random() * 1000);
 }
 
 export function Chat() {
@@ -107,7 +107,7 @@ export function Chat() {
                 // @ts-expect-error
                 ref={messageRef}
                 key={id}
-                id={id}
+                id={`${id}`}
                 className={clsx(
                   'flex items-end gap-2',
                   author === currentUserId && 'flex-row-reverse',
@@ -181,7 +181,51 @@ export function Chat() {
           })}
         </div>
         <div ref={scrollAnchor}></div>
-        <ChatDrawer message={drawerMessage} close={() => setDrawerMessage(null)} />
+        <ChatDrawer
+          message={drawerMessage}
+          close={() => setDrawerMessage(null)}
+          onChange={({ message, opinion }) => {
+            setMessages(previous => previous.map(m => {
+              return m.id === message.id ? {
+                ...m,
+                analysis: {
+                  value: -1,
+                  reasoning: 'Loading'
+                },
+              } : m
+            }))
+            
+            setTimeout(() => {
+              ;(async () => {
+                await fetch('/api/opinions', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    message_id: message.id,
+                    message: message.content,
+                    urgency: opinion,
+                  })
+                })
+          
+                const newMessage = await getMessage(message.id)
+          
+                setMessages(previous => previous.map(m => {
+                  return m.id === message.id ? {
+                    ...m,
+                    analysis: {
+                      value: Number(newMessage.analysis.interpreted_value),
+                      reasoning: newMessage.analysis.llm_reasoning,
+                    },
+                  } : m
+                }))
+              })()
+            }, 50)
+        
+            setDrawerMessage(null)
+          }}
+        />
       </main>
       <ChatFooter
         currentUserId={currentUserId}
@@ -226,23 +270,17 @@ export function Chat() {
   )
 }
 
-function ChatDrawer({ message, close }: { message: Message | null, close: () => void }) {
-  const { content, analysis: { value, reasoning } } = message || { analysis: {} }
+function ChatDrawer({ message, close, onChange }: { message: Message | null, close: () => void, onChange: Function }) {
+  const { id, analysis: { value, reasoning } } = message || { analysis: {} }
   
   const opinions = [1, 2, 3].filter(opinion => opinion !== value)
 
   async function storeOpinion(opinion: number) {
-    fetch('/api/opinions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: content,
-        urgency: opinion,
-      })
-    })
-    close()
+    if (typeof id !== 'number') {
+      return
+    }
+
+    onChange({ message, opinion })
   }
 
   return (
