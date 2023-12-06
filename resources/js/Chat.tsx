@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import useListRef from './useListRef';
+import { nanoid } from 'nanoid';
 
 type Message = {
   id: string,
   content: string,
   author: string,
   timestamp: number,
-  urgency: 1 | 2 | 3,
-  urgencyJustification: string,
+  status: 0 | 1 | 2,
+  analysis: {
+    value?: 1 | 2 | 3,
+    reasoning?: string,
+  }
 }
 
 type User = {
@@ -16,79 +20,32 @@ type User = {
   name: string,
 }
 
-let totalMessages = 6;
 function getMessageId() {
-  return `message-${++totalMessages}`
-}
-
-function getRandomUrgency() {
-  return Math.floor(Math.random() * 3) + 1 as 1 | 2 | 3
+  return nanoid();
 }
 
 export function Chat() {
-  const currentUserId = 'user-2'
-
   const users: User[] = useMemo(() => [
     {
-      id: "user-1",
+      id: "client",
       name: "Client",
     },
     {
-      id: 'user-2',
+      id: 'therapist',
       name: "Therapist",
     }
   ], [])
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: `message-1`,
-      content: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-      author: 'user-1',
-      timestamp: Date.now() - 1000 * 60 * 8,
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-    },
-    {
-      id: `message-2`,
-      content: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-      author: 'user-2',
-      timestamp: Date.now() - 1000 * 60 * 7,
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-    },
-    {
-      id: `message-3`,
-      content: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-      author: 'user-1',
-      timestamp: Date.now() - 1000 * 60 * 6,
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-    },
-    {
-      id: `message-4`,
-      content: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-      author: 'user-1',
-      timestamp: Date.now() - 1000 * 60 * 5,
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-    },
-    {
-      id: `message-5`,
-      content: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-      author: 'user-2',
-      timestamp: Date.now() - 1000 * 60 * 4,
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-    },
-    {
-      id: `message-6`,
-      content: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-      author: 'user-1',
-      timestamp: Date.now() - 1000 * 60 * 3,
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
-    },
-  ]);
+  const [messages, setMessages] = useMessages(); 
+
+  const [currentUserId, setCurrentUserId] = useState('');
+  const isTherapist = users.find(user => user.id === currentUserId)?.name === 'Therapist';
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isTherapist = params.get('user') === 'therapist';
+    setCurrentUserId(isTherapist ? 'therapist' : 'client');
+  }, [])
 
   const scrollAnchor = useRef<HTMLDivElement>(null);
 
@@ -96,97 +53,159 @@ export function Chat() {
     scrollAnchor.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, scrollAnchor]) 
   
-  const mainRef = useRef<HTMLDivElement>(null);
-  
-  const { gradientRef, messageRef } = useUrgencyGradient({ messages, mainRef, currentUserId })
+  const messageContainerRef = useRef<HTMLDivElement>(null);
+
+  const { gradientRef, messageRef } = useUrgencyGradient({ isTherapist, messages, messageContainerRef, currentUserId })
 
   const [drawerContent, setDrawerContent] = useState('')
+
+  const channel = useBroadcastChannel({
+    onMessage: (message) => {
+      setMessages(previous => {
+        const existing = previous.find(({ content }) => content === message.content)
+
+        if (existing) {
+          // analysis came in
+          return previous.map(m => {
+            return m.content === existing.content ? message : m
+          })
+        }
+
+        return [
+          ...previous,
+          message
+        ].sort((a, b) => a.timestamp - b.timestamp)
+      })
+    }
+  });
 
   return (
     <div className="flex flex-col w-full min-h-full">
       <header className="flex items-center h-16 px-4 border-b bg-beige-200">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center w-full gap-2">
           <img src="/logo-icon.png" className="w-10 h-10" />
           <div className="flex flex-col">
-            <h2 className="font-semibold">Client</h2>
+            <h2 className="font-semibold">{isTherapist ? 'My Client' : 'My Therapist'}</h2>
             <span className="text-xs text-gray-500">Online</span>
           </div>
         </div>
       </header>
-      <main ref={mainRef} className="relative flex flex-col flex-1 gap-4 px-4 py-6 overflow-x-hidden overflow-y-auto bg-white">
-        <div className="absolute top-0 bottom-0 left-0 w-1.5 h-full" ref={gradientRef}></div>
-        {messages.map(({ id, content, author, timestamp, urgency, urgencyJustification }) => (
-          <div
-            // @ts-expect-error
-            ref={messageRef}
-            key={id}
-            id={id}
-            className={clsx(
-              'flex items-end gap-2',
-              author === currentUserId && 'ml-auto flex-row-reverse',
-            )}
-          >
-            <div className={clsx(
-              'w-8 h-8 rounded-full flex items-center justify-center font-bold uppercase',
-              author === currentUserId
-                ? 'bg-primary-200 text-primary-800'
-                : 'bg-gray-200 text-gray-800'
-            )}>
-              {users.find(user => user.id === author)?.name[0]}
-            </div>
-            <div className={clsx(
-              'p-2 max-w-[70%]',
-              author === currentUserId
-                ? 'bg-primary-100 text-primary-1000 rounded-md rounded-br-none'
-                : 'bg-gray-100 text-gray-900 rounded-md rounded-bl-none'
-            )}>
-              <p className="text-sm">{content}</p>
-              <p className={clsx(
-                'text-xs mt-2',
-                author === currentUserId ? 'text-primary-700' : 'text-gray-600'
+      <main
+        className="flex flex-col flex-1 gap-4 overflow-x-hidden overflow-y-auto bg-white"
+      >
+        <div ref={messageContainerRef} className="relative flex flex-col gap-4 px-4 py-6 ">
+          {isTherapist && <div className="absolute top-0 bottom-0 left-0 w-1.5 h-full" ref={gradientRef}></div>}
+          {messages.map(({ id, content, author, timestamp, analysis }) => (
+            <div
+              // @ts-expect-error
+              ref={messageRef}
+              key={id}
+              id={id}
+              className={clsx(
+                'flex items-end gap-2',
+                author === currentUserId && 'ml-auto flex-row-reverse',
+              )}
+            >
+              <div className={clsx(
+                'w-8 h-8 rounded-full flex items-center justify-center font-bold uppercase',
+                author === currentUserId
+                  ? 'bg-primary-200 text-primary-800'
+                  : 'bg-gray-200 text-gray-800'
               )}>
-                {
-                  new Intl.DateTimeFormat('en-us', {
-                    weekday: 'short',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                  }).format(timestamp)
-                }
-              </p>
+                {users.find(user => user.id === author)?.name[0]}
+              </div>
+              <div className={clsx(
+                'p-2 max-w-[70%]',
+                author === currentUserId
+                  ? 'bg-primary-100 text-primary-1000 rounded-md rounded-br-none' 
+                  : 'bg-gray-100 text-gray-900 rounded-md rounded-bl-none'
+              )}>
+                <p className="text-sm">{content}</p>
+                <p className={clsx(
+                  'text-xs mt-2',
+                  author === currentUserId ? 'text-primary-700' : 'text-gray-600'
+                )}>
+                  {
+                    new Intl.DateTimeFormat('en-us', {
+                      weekday: 'short',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true,
+                    }).format(timestamp)
+                  }
+                </p>
+              </div>
+              {
+                author !== currentUserId && isTherapist && (
+                  <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
+                    {analysis?.value
+                      ? (
+                        <button type="button" onClick={() => {
+                          setDrawerContent(analysis.reasoning || '')
+                        }} className={clsx(
+                          'w-4 h-4 rounded-full',
+                          (() => {
+                            switch (analysis.value) {
+                              case 1:
+                                return 'bg-green-500'
+                              case 2:
+                                return 'bg-yellow-500'
+                              case 3:
+                                return 'bg-red-500'
+                            }
+                          })()
+                        )}></button>
+                      )
+                      : (
+                        <svg className="w-4 h-4 mr-3 -ml-1 text-gray-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      )
+                    }
+                  </div>
+                )
+              }
             </div>
-            {
-              author !== currentUserId && (
-                <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
-                  <button type="button" onClick={() => {
-                    setDrawerContent(urgencyJustification)
-                  }} className={clsx(
-                    'w-3 h-3 rounded-full',
-                    (() => {
-                      switch (urgency) {
-                        case 1:
-                          return 'bg-green-500'
-                        case 2:
-                          return 'bg-yellow-500'
-                        case 3:
-                          return 'bg-red-500'
-                      }
-                    })()
-                  )}></button>
-                </div>
-              )
-            }
-          </div>
-        ))}
+          ))}
+        </div>
         <div ref={scrollAnchor}></div>
         <ChatDrawer content={drawerContent} unsetContent={() => setDrawerContent('')} />
       </main>
       <ChatFooter
+        currentUserId={currentUserId}
         onNewMessage={
-          newMessage => setMessages(previous => [
-            ...previous,
-            newMessage
-          ].sort((a, b) => a.timestamp - b.timestamp))
+          
+
+          newMessage => {
+            channel.current?.postMessage(newMessage)
+            
+            setMessages(previous => [
+              ...previous,
+              newMessage
+            ].sort((a, b) => a.timestamp - b.timestamp))
+
+            if (isTherapist) {
+              return
+            }
+
+            ;(async () => {
+              const json = await sendMessage(newMessage)
+              const message = await getMessage(json.id)
+
+              channel.current?.postMessage({
+                id: message.id,
+                author: 'client',
+                content: message.message_text,
+                status: message.analysis_status, 
+                timestamp: new Date(message.created_at).getTime(),
+                analysis: {
+                  value: Number(message.analysis.interpreted_value),
+                  reasoning: message.analysis.llm_reasoning,
+                },
+              })
+            })()
+          }
         }
       />
     </div>
@@ -208,17 +227,19 @@ function ChatDrawer({ content, unsetContent }: { content: string, unsetContent: 
           <IconX />
         </button>
         <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
-          <h3 className="text-lg font-semibold">Second opinion</h3>
+          <h3 className="text-lg font-semibold">📝 Second opinion</h3>
           <p className="text-sm">{content}</p>
         </div>
         <div className="flex items-center justify-center w-full gap-4">
           <button
             type="button"
             className="flex items-center px-4 py-2 rounded-full text-primary-1000 bg-primary-200"
+            onClick={unsetContent}
           >I agree</button>
           <button
             type="button"
             className="flex items-center px-4 py-2 bg-red-200 rounded-full text-red-950"
+            onClick={unsetContent}
           >I disagree</button>
         </div>
       </div>
@@ -226,18 +247,22 @@ function ChatDrawer({ content, unsetContent }: { content: string, unsetContent: 
   )
 }
 
-function ChatFooter({ onNewMessage }: { onNewMessage: (newMessage: Message) => void }) {
+function ChatFooter({ onNewMessage, currentUserId }: { onNewMessage: (newMessage: Message) => void, currentUserId: string }) {
   const [content, setContent] = useState('');
   const input = useRef<HTMLTextAreaElement>(null);
 
   function handleNewMessage() {
+    if (!content) {
+      return
+    }
+
     onNewMessage({
       id: getMessageId(),
       content,
-      author: Math.random() < 0.75 ? 'user-1' : 'user-2',
+      author: currentUserId,
       timestamp: Date.now(),
-      urgency: getRandomUrgency(),
-      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
+      status: 0,
+      analysis: {},
     })
 
     setContent('')
@@ -261,7 +286,7 @@ function ChatFooter({ onNewMessage }: { onNewMessage: (newMessage: Message) => v
             setContent(input.value)
           }}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && event.metaKey) {
+            if (event.key === 'Enter') {
               event.preventDefault()
               handleNewMessage()
             }
@@ -270,8 +295,7 @@ function ChatFooter({ onNewMessage }: { onNewMessage: (newMessage: Message) => v
         <button
           type="button"
           onClick={handleNewMessage}
-          className="flex items-center justify-center w-10 h-10 p-2 transition rounded-full select-none text-primary-50 bg-primary-700 disabled:opacity-60"
-          disabled={!content}
+          className="flex items-center justify-center w-10 h-10 p-2 transition rounded-full select-none text-primary-50 bg-primary-700"
         >
           <IconSend />
         </button>
@@ -302,53 +326,57 @@ function IconSend(props) {
  * Applies a linear gradient that spans the height of the chat,
  * transitioning its color based on the urgency of the messages
  */
-function useUrgencyGradient({ messages, mainRef, currentUserId }) {
+function useUrgencyGradient({ isTherapist, messages, messageContainerRef, currentUserId }) {
   const [messageElements, messageRef] = useListRef();
   const gradientRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Iterate over the message elements to get their top and bottom positions.
-    // This will be used to calculate the gradient stops
-    // @ts-expect-error
-    const tops = messageElements.current
-      .filter((_, index) => messages[index].author !== currentUserId)
-      .map(element => element.getBoundingClientRect().top)
+    if (!isTherapist || !messages.length) {
+      return
+    }
 
-    const mainRefHeight = mainRef.current.offsetHeight
+    // @ts-expect-error
+    const positions = messageElements.current
+      .filter((_, index) => messages[index].author !== currentUserId)
+      .map(element => {
+        const { top, bottom } = element.getBoundingClientRect()
+        return { top, bottom }
+      })      
+
+    const { top: messageContainerTop, height: messageContainerHeight } = messageContainerRef.current.getBoundingClientRect()
 
     // Calculate the gradient stops based on the tops. Each color should start at the top of the current message and end at the top of the next message
-    const stops = tops.map((top) => {
-      const topPercentage = (top / mainRefHeight) * 100
-      return `${topPercentage}%`
-    })
-
-    // Calculate the gradient colors based on the urgency of the messages
-    const colors = messages
-      .filter(({ author }) => author !== currentUserId)
-      .map(({ urgency }) => {
-        switch (urgency) {
+    const stops = positions.reduce((stops, { top, bottom }, index) => {
+      const topPercentage = ((top - messageContainerTop) / messageContainerHeight) * 100
+      const bottomPercentage = ((bottom - messageContainerTop) / messageContainerHeight) * 100
+      const analysisValue = messages.filter(({ author }) => author !== currentUserId)[index].analysis?.value
+      const color = (() => {
+        switch (analysisValue) {
           case 0:
             return 'white'
           case 1:
-            return 'rgb(34 197 94)'
+            return 'rgb(34,197,94)'
           case 2:
-            return 'rgb(234 179 8)'
+            return 'rgb(234,179,8)'
           case 3:
-            return 'rgb(239 68 68)'
+            return 'rgb(239,68,68)'
+          default:
+            return 'rgb(228,228,231)'
         }
-      })
+      })()
+
+      stops.push(`${color} ${topPercentage}%`, `${color} ${bottomPercentage}%`)
+
+      return stops
+    }, [] as string[])
 
     // format the gradient string
-    let linearGradient = `linear-gradient(to bottom, white 0%, `
-    for (let i = 0; i < stops.length; i++) {
-      linearGradient += `${colors[i]} ${stops[i]}, `
-    }
-    linearGradient += `white 100%)`
-
+    const linearGradient = `linear-gradient(to bottom, ${stops[0].split(' ')[0]} 0%, ${stops.join(', ')}, ${stops[stops.length - 1].split(' ')[0]} 100%)`
+    
     // Apply the gradient
-    // @ts-expect-error
+    // @ts-ignore
     gradientRef.current.style.backgroundImage = linearGradient
-  }, [messages, currentUserId])
+  }, [messages, currentUserId, isTherapist])
 
   return { gradientRef, messageRef }
 }
@@ -362,7 +390,75 @@ function IconX(props) {
 }
 
 async function getMessages() {
-  const response = await fetch();
+  const response = await fetch('/api/messages');
   const json = await response.json();
+
+  return json.map(({ id, message_text, created_at, analysis_status, analysis }) => ({
+    id,
+    author: 'client',
+    content: message_text,
+    status: analysis_status, 
+    timestamp: new Date(created_at).getTime(),
+    analysis: {
+      value: Number(analysis.interpreted_value),
+      reasoning: analysis.llm_reasoning,
+    },
+  }));
+}
+
+function useMessages() {
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const messages = await getMessages();
+      setMessages(messages);
+    })()
+  }, [])
+
+  return [messages, setMessages] as const
+}
+
+async function sendMessage(message: Message) {
+  const response = await fetch('/api/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message_text: message.content,
+    }),
+  })
+
+  const json = await response.json();
+
   return json;
+}
+
+async function getMessage(id: number) {
+  const response = await fetch(`/api/messages/${id}`);
+  const json = await response.json();
+
+  return json;
+}
+
+function useBroadcastChannel({ onMessage }: { onMessage?: (message: Message) => void}) {
+  const onMessageRef = useRef(onMessage);
+  onMessageRef.current = onMessage;
+  const channel = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    channel.current = new BroadcastChannel('second opinion');
+    
+    channel.current.onmessage = (event) => {
+      const message = event.data as Message;
+      onMessageRef.current?.(message);
+    }
+
+    return () => {
+      channel.current?.close();
+    }
+  }, [onMessageRef])
+
+  return channel
 }
