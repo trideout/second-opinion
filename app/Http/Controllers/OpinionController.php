@@ -6,6 +6,7 @@ use App\Http\Requests\OpinionStoreRequest;
 use App\Models\Message;
 use App\Models\Opinion;
 use Illuminate\Http\Request;
+use OpenApi\Annotations as OA;
 
 class OpinionController extends Controller
 {
@@ -23,6 +24,13 @@ class OpinionController extends Controller
      *     summary="Create a new opinion",
      *     tags={"Opinions"},
      *     description="Create a new opinion to help train the llm in future analyses.",
+     *      @OA\Parameter(
+     *          name="message_id",
+     *          in="query",
+     *          required=true,
+     *          @OA\Schema(type="integer"),
+     *          example="1"
+     *      ),
      *     @OA\Parameter(
      *         name="message",
      *         in="query",
