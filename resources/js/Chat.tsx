@@ -57,7 +57,7 @@ export function Chat() {
 
   const { gradientRef, messageRef } = useUrgencyGradient({ isTherapist, messages, messageContainerRef, currentUserId })
 
-  const [drawerContent, setDrawerContent] = useState('')
+  const [drawerMessage, setDrawerMessage] = useState<Message | null>(null);
 
   const channel = useBroadcastChannel({
     onMessage: (message) => {
@@ -100,85 +100,88 @@ export function Chat() {
       >
         <div ref={messageContainerRef} className="relative flex flex-col gap-4 px-4 py-6 ">
           {isTherapist && <div className="absolute top-0 bottom-0 left-0 w-1.5 h-full" ref={gradientRef}></div>}
-          {messages.map(({ id, content, author, timestamp, analysis }) => (
-            <div
-              // @ts-expect-error
-              ref={messageRef}
-              key={id}
-              id={id}
-              className={clsx(
-                'flex items-end gap-2',
-                author === currentUserId && 'flex-row-reverse',
-              )}
-            >
-              <div className={clsx(
-                'w-8 h-8 rounded-full flex items-center justify-center font-bold uppercase',
-                author === currentUserId
-                  ? 'bg-primary-200 text-primary-800'
-                  : 'bg-gray-200 text-gray-800'
-              )}>
-                {users.find(user => user.id === author)?.name[0]}
-              </div>
-              <div className={clsx(
-                'p-2 max-w-[70%]',
-                author === currentUserId
-                  ? 'bg-primary-100 text-primary-1000 rounded-md rounded-br-none' 
-                  : 'bg-gray-100 text-gray-900 rounded-md rounded-bl-none'
-              )}>
-                <p className="text-sm">{content}</p>
-                <p className={clsx(
-                  'text-xs mt-2',
-                  author === currentUserId ? 'text-primary-700' : 'text-gray-600'
+          {messages.map((message) => {
+            const { id, content, author, timestamp, analysis } = message 
+            return (
+              <div
+                // @ts-expect-error
+                ref={messageRef}
+                key={id}
+                id={id}
+                className={clsx(
+                  'flex items-end gap-2',
+                  author === currentUserId && 'flex-row-reverse',
+                )}
+              >
+                <div className={clsx(
+                  'w-8 h-8 rounded-full flex items-center justify-center font-bold uppercase',
+                  author === currentUserId
+                    ? 'bg-primary-200 text-primary-800'
+                    : 'bg-gray-200 text-gray-800'
                 )}>
-                  {
-                    new Intl.DateTimeFormat('en-us', {
-                      weekday: 'short',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true,
-                    }).format(timestamp)
-                  }
-                </p>
-              </div>
-              {
-                author !== currentUserId && isTherapist && (
-                  <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
-                    {/* @ts-expect-error */}
-                    {analysis?.value > -1
-                      ? (
-                        <button type="button" onClick={() => {
-                          setDrawerContent(analysis.reasoning || '')
-                        }} className={clsx(
-                          'w-4 h-4 rounded-full',
-                          (() => {
-                            switch (analysis.value) {
-                              case 0:
-                                return 'bg-white ring-inset ring-2 ring-gray-400'
-                              case 1:
-                                return 'bg-green-500'
-                              case 2:
-                                return 'bg-yellow-500'
-                              case 3:
-                                return 'bg-red-500'
-                            }
-                          })()
-                        )}></button>
-                      )
-                      : (
-                        <svg className="w-4 h-4 mr-3 -ml-1 text-gray-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      )
+                  {users.find(user => user.id === author)?.name[0]}
+                </div>
+                <div className={clsx(
+                  'p-2 max-w-[70%]',
+                  author === currentUserId
+                    ? 'bg-primary-100 text-primary-1000 rounded-md rounded-br-none' 
+                    : 'bg-gray-100 text-gray-900 rounded-md rounded-bl-none'
+                )}>
+                  <p className="text-sm">{content}</p>
+                  <p className={clsx(
+                    'text-xs mt-2',
+                    author === currentUserId ? 'text-primary-700' : 'text-gray-600'
+                  )}>
+                    {
+                      new Intl.DateTimeFormat('en-us', {
+                        weekday: 'short',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      }).format(timestamp)
                     }
-                  </div>
-                )
-              }
-            </div>
-          ))}
+                  </p>
+                </div>
+                {
+                  author !== currentUserId && isTherapist && (
+                    <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
+                      {/* @ts-expect-error */}
+                      {analysis?.value > -1
+                        ? (
+                          <button type="button" onClick={() => {
+                            setDrawerMessage(message)
+                          }} className={clsx(
+                            'w-4 h-4 rounded-full',
+                            (() => {
+                              switch (analysis.value) {
+                                case 0:
+                                  return 'bg-white ring-inset ring-2 ring-gray-400'
+                                case 1:
+                                  return 'bg-green-500'
+                                case 2:
+                                  return 'bg-yellow-500'
+                                case 3:
+                                  return 'bg-red-500'
+                              }
+                            })()
+                          )}></button>
+                        )
+                        : (
+                          <svg className="w-4 h-4 mr-3 -ml-1 text-gray-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        )
+                      }
+                    </div>
+                  )
+                }
+              </div>
+            )
+          })}
         </div>
         <div ref={scrollAnchor}></div>
-        <ChatDrawer content={drawerContent} unsetContent={() => setDrawerContent('')} />
+        <ChatDrawer message={drawerMessage} close={() => setDrawerMessage(null)} />
       </main>
       <ChatFooter
         currentUserId={currentUserId}
@@ -223,35 +226,90 @@ export function Chat() {
   )
 }
 
-function ChatDrawer({ content, unsetContent }: { content: string, unsetContent: () => void }) {
+function ChatDrawer({ message, close }: { message: Message | null, close: () => void }) {
+  const { content, analysis: { value, reasoning } } = message || { analysis: {} }
+  
+  const opinions = [1, 2, 3].filter(opinion => opinion !== value)
+
+  async function storeOpinion(opinion: number) {
+    fetch('/api/opinions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: content,
+        urgency: opinion,
+      })
+    })
+    close()
+  }
+
   return (
     <div className={clsx(
-      'fixed bottom-0 left-0 right-0 z-10 p-4 bg-white shadow-lg h-[calc(33vh)] w-screen transition duration-150 ease-in-out border-t border-gray-3000',
-      content ? 'translate-y-0' : 'translate-y-full',
+      'fixed bottom-0 left-0 right-0 z-10 p-4 bg-white shadow-lg h-[calc(42vh)] w-screen transition duration-150 ease-in-out border-t border-gray-3000',
+      reasoning ? 'translate-y-0' : 'translate-y-full',
     )}>
-      <div className="relative flex flex-col w-full max-h-full gap-4">
+      <div className="relative flex flex-col w-full max-h-full">
         <button
           type="button"
-          onClick={unsetContent}
+          onClick={close}
           className="absolute top-0 right-0 w-10 h-10 text-gray-900 transition rounded-full select-none"
         >
           <IconX />
         </button>
         <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-scroll">
           <h3 className="text-lg font-semibold">📝 Second opinion</h3>
-          <p className="text-sm">{content}</p>
+          <p className="text-sm">{reasoning}</p>
         </div>
-        <div className="flex items-center justify-center w-full gap-4">
+        <div className="flex flex-col items-center justify-center gap-4">
           <button
             type="button"
-            className="flex items-center px-4 py-2 rounded-full text-primary-1000 bg-primary-200"
-            onClick={unsetContent}
-          >I agree</button>
-          <button
-            type="button"
-            className="flex items-center px-4 py-2 bg-red-200 rounded-full text-red-950"
-            onClick={unsetContent}
-          >I disagree</button>
+            className="flex items-center gap-1 px-4 py-2 rounded-full bg-primary-200 text-primary-950"
+            onClick={close}
+          >
+            <span>I agree</span>
+            <IconCheck className="w-4 h-4" />
+          </button>
+          
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm">I disagree, I think this message is:</p>
+            <div className="flex items-center justify-center w-full gap-2">
+              {opinions.map(opinion => (
+                <button
+                  key={opinion}
+                  type="button"
+                  className={clsx(
+                    'flex items-center px-3 py-1.5 text-sm rounded-full',
+                    (() => {
+                      switch (opinion) {
+                        case 1:
+                          return 'bg-green-100 text-green-950'
+                        case 2:
+                          return 'bg-yellow-100 text-yellow-950'
+                        case 3:
+                          return 'bg-red-100 text-red-950'
+                      }
+                    })()
+                  )}
+                  onClick={() => storeOpinion(opinion)}
+                >
+                  {
+                    (() => {
+                      switch (opinion) {
+                        case 1:
+                          return 'Not urgent'
+                        case 2:
+                          return 'Somewhat urgent'
+                        case 3:
+                          return 'Urgent'
+                      }
+                    })()
+                  }
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -385,7 +443,7 @@ function useUrgencyGradient({ isTherapist, messages, messageContainerRef, curren
     }, [] as string[])
 
     // format the gradient string
-    const linearGradient = `linear-gradient(to bottom, ${stops[0].split(' ')[0]} 0%, ${stops.join(', ')}, ${stops[stops.length - 1].split(' ')[0]} 100%)`
+    const linearGradient = `linear-gradient(to bottom, white 0%, ${stops.join(', ')}, white 100%)`
     
     // Apply the gradient
     // @ts-ignore
@@ -480,4 +538,14 @@ function useBroadcastChannel({ onMessage }: { onMessage?: (message: Message) => 
   }, [onMessageRef])
 
   return channel
+}
+
+function IconCheck(props) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6" {...props} >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+
+  )
+
 }
