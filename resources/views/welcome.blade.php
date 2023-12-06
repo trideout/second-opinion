@@ -10,8 +10,8 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
     </head>
-    <body class="antialiased font-sans">
-        <div id="app" class="w-screen h-screen flex"></div>
+    <body class="w-screen overflow-x-hidden font-sans antialiased">
+        <div id="app" class="flex w-screen h-screen"></div>
     </body>
     @viteReactRefresh
     @vite('resources/js/app.tsx')

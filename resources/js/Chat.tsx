@@ -8,6 +8,7 @@ type Message = {
   author: string,
   timestamp: number,
   urgency: 1 | 2 | 3,
+  urgencyJustification: string,
 }
 
 type User = {
@@ -45,6 +46,7 @@ export function Chat() {
       author: 'user-1',
       timestamp: Date.now() - 1000 * 60 * 8,
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     },
     {
       id: `message-2`,
@@ -52,6 +54,7 @@ export function Chat() {
       author: 'user-2',
       timestamp: Date.now() - 1000 * 60 * 7,
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     },
     {
       id: `message-3`,
@@ -59,6 +62,7 @@ export function Chat() {
       author: 'user-1',
       timestamp: Date.now() - 1000 * 60 * 6,
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     },
     {
       id: `message-4`,
@@ -66,6 +70,7 @@ export function Chat() {
       author: 'user-1',
       timestamp: Date.now() - 1000 * 60 * 5,
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     },
     {
       id: `message-5`,
@@ -73,6 +78,7 @@ export function Chat() {
       author: 'user-2',
       timestamp: Date.now() - 1000 * 60 * 4,
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     },
     {
       id: `message-6`,
@@ -80,6 +86,7 @@ export function Chat() {
       author: 'user-1',
       timestamp: Date.now() - 1000 * 60 * 3,
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     },
   ]);
 
@@ -93,21 +100,22 @@ export function Chat() {
   
   const { gradientRef, messageRef } = useUrgencyGradient({ messages, mainRef, currentUserId })
 
+  const [drawerContent, setDrawerContent] = useState('')
+
   return (
     <div className="flex flex-col w-full min-h-full">
       <header className="flex items-center h-16 px-4 border-b bg-beige-200">
         <div className="flex items-center gap-2">
           <img src="/logo-icon.png" className="w-10 h-10" />
-          {/* <IconArrowleft className="w-6 h-6 text-gray-500" /> */}
           <div className="flex flex-col">
             <h2 className="font-semibold">Client</h2>
             <span className="text-xs text-gray-500">Online</span>
           </div>
         </div>
       </header>
-      <main ref={mainRef} className="relative flex flex-col flex-1 gap-4 px-4 py-6 overflow-y-auto bg-white">
+      <main ref={mainRef} className="relative flex flex-col flex-1 gap-4 px-4 py-6 overflow-x-hidden overflow-y-auto bg-white">
         <div className="absolute top-0 bottom-0 left-0 w-1.5 h-full" ref={gradientRef}></div>
-        {messages.map(({ id, content, author, timestamp, urgency }) => (
+        {messages.map(({ id, content, author, timestamp, urgency, urgencyJustification }) => (
           <div
             // @ts-expect-error
             ref={messageRef}
@@ -150,7 +158,9 @@ export function Chat() {
             {
               author !== currentUserId && (
                 <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
-                  <div className={clsx(
+                  <button type="button" onClick={() => {
+                    setDrawerContent(urgencyJustification)
+                  }} className={clsx(
                     'w-3 h-3 rounded-full',
                     (() => {
                       switch (urgency) {
@@ -162,13 +172,14 @@ export function Chat() {
                           return 'bg-red-500'
                       }
                     })()
-                  )}></div>
+                  )}></button>
                 </div>
               )
             }
           </div>
         ))}
         <div ref={scrollAnchor}></div>
+        <ChatDrawer content={drawerContent} unsetContent={() => setDrawerContent('')} />
       </main>
       <ChatFooter
         onNewMessage={
@@ -178,6 +189,39 @@ export function Chat() {
           ].sort((a, b) => a.timestamp - b.timestamp))
         }
       />
+    </div>
+  )
+}
+
+function ChatDrawer({ content, unsetContent }: { content: string, unsetContent: () => void }) {
+  return (
+    <div className={clsx(
+      'fixed bottom-0 left-0 right-0 z-10 p-4 bg-white shadow-lg h-[calc(33vh)] w-screen transition duration-150 ease-in-out border-t border-gray-3000',
+      content ? 'translate-y-0' : 'translate-y-full',
+    )}>
+      <div className="relative flex flex-col w-full gap-4">
+        <button
+          type="button"
+          onClick={unsetContent}
+          className="absolute top-0 right-0 w-10 h-10 text-gray-900 transition rounded-full select-none"
+        >
+          <IconX />
+        </button>
+        <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
+          <h3 className="text-lg font-semibold">Second opinion</h3>
+          <p className="text-sm">{content}</p>
+        </div>
+        <div className="flex items-center justify-center w-full gap-4">
+          <button
+            type="button"
+            className="flex items-center px-4 py-2 rounded-full text-primary-1000 bg-primary-200"
+          >I agree</button>
+          <button
+            type="button"
+            className="flex items-center px-4 py-2 bg-red-200 rounded-full text-red-950"
+          >I disagree</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -193,6 +237,7 @@ function ChatFooter({ onNewMessage }: { onNewMessage: (newMessage: Message) => v
       author: Math.random() < 0.75 ? 'user-1' : 'user-2',
       timestamp: Date.now(),
       urgency: getRandomUrgency(),
+      urgencyJustification: `I'm baby hashtag tonx DIY iPhone street art. Af grailed four loko XOXO air plant ugh thundercats chillwave sustainable austin keffiyeh tilde.`,
     })
 
     setContent('')
@@ -234,27 +279,6 @@ function ChatFooter({ onNewMessage }: { onNewMessage: (newMessage: Message) => v
   )
 }
 
-function IconArrowleft(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m12 19-7-7 7-7" />
-      <path d="M19 12H5" />
-    </svg>
-  )
-}
-
-
 function IconSend(props) {
   return (
     <svg
@@ -292,34 +316,34 @@ function useUrgencyGradient({ messages, mainRef, currentUserId }) {
 
     const mainRefHeight = mainRef.current.offsetHeight
 
-    // Calculate the gradient stops based on the tops. Each color stop should start at the top of the current message and end at the top of the next message
+    // Calculate the gradient stops based on the tops. Each color should start at the top of the current message and end at the top of the next message
     const stops = tops.map((top) => {
       const topPercentage = (top / mainRefHeight) * 100
       return `${topPercentage}%`
     })
 
     // Calculate the gradient colors based on the urgency of the messages
-    const colors = messages.map(({ urgency }) => {
-      switch (urgency) {
-        case 0:
-          return 'white'
-        case 1:
-          return 'rgb(34 197 94)'
-        case 2:
-          return 'rgb(234 179 8)'
-        case 3:
-          return 'rgb(239 68 68)'
-      }
-    })
+    const colors = messages
+      .filter(({ author }) => author !== currentUserId)
+      .map(({ urgency }) => {
+        switch (urgency) {
+          case 0:
+            return 'white'
+          case 1:
+            return 'rgb(34 197 94)'
+          case 2:
+            return 'rgb(234 179 8)'
+          case 3:
+            return 'rgb(239 68 68)'
+        }
+      })
 
     // format the gradient string
     let linearGradient = `linear-gradient(to bottom, white 0%, `
     for (let i = 0; i < stops.length; i++) {
       linearGradient += `${colors[i]} ${stops[i]}, `
     }
-    linearGradient += `${colors[colors.length - 1]} 100%)`
-
-    console.log(linearGradient)
+    linearGradient += `white 100%)`
 
     // Apply the gradient
     // @ts-expect-error
@@ -327,4 +351,18 @@ function useUrgencyGradient({ messages, mainRef, currentUserId }) {
   }, [messages, currentUserId])
 
   return { gradientRef, messageRef }
+}
+
+function IconX(props) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  )
+}
+
+async function getMessages() {
+  const response = await fetch();
+  const json = await response.json();
+  return json;
 }
