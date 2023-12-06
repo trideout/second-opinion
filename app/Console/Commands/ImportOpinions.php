@@ -33,6 +33,9 @@ class ImportOpinions extends Command
         $imported = 0;
         $file = fopen(base_path('import.csv'));
         while ($row = fgetcsv($file)) {
+            if (Opinion::where('message', $row[0])->count()) {
+                continue;
+            }
             Opinion::create([
                 'message' => $row[0],
                 'urgency' => $row[1],
