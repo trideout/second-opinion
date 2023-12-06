@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OpinionStoreRequest;
+use App\Models\Analysis;
 use App\Models\Message;
 use App\Models\Opinion;
 use Illuminate\Http\Request;
@@ -51,10 +52,9 @@ class OpinionController extends Controller
      */
     public function store(OpinionStoreRequest $request)
     {
-        $message = Message::find($request->message_id);
-        $message->update([
-            'interpreted_value' => $request->urgency,
-        ]);
+        $analysis = Analysis::where('message_id', $request->message_id)->first();
+        $analysis->interpreted_value = $request->urgency;
+        $analysis->save();
 
         $opinion = Opinion::create([
             'message' => $request->message,

@@ -11,7 +11,7 @@ class OpinionStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,7 +24,7 @@ class OpinionStoreRequest extends FormRequest
         return [
             'message' => 'required',
             'urgency' => 'required|integer|between:1,3',
-            'message_id' => 'optional',
+            'message_id' => 'required',
         ];
     }
 }
