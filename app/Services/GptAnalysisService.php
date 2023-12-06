@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\GPT\Actions\SecondOpinionGpt\SecondOpinionGPTAction;
 use App\Models\Analysis;
 use App\Models\Message;
 
@@ -10,22 +11,7 @@ class GptAnalysisService implements AnalysisInterface {
     public function processMessage(Message $message): Analysis
     {
         $this->message = $message;
-        $this->sendToGpt();
-        $this->analyseResponse();
-        return $this->createResponseRecord();
+        SecondOpinionGPTAction::make($message)->send($message->message_text);
+        return $this->message->analysis;
     }
-
-    protected function sendToGpt(): void {
-
-    }
-
-    protected function analyseResponse(): void {
-
-    }
-
-    protected function createResponseRecord(): Analysis {
-        $analysis = Analysis::create([]);
-        return $analysis;
-    }
-
 }
