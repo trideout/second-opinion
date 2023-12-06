@@ -27,12 +27,12 @@ class SecondOpinionGPTAction extends GPTAction
             Previous Decisions:
             ' . $previousDecisions . '
 
-            Given the above previous decisions on urgency, and assuming that the patient has a session scheduled within 2 weeks. As the secretary working for a therapist, determine on a scale of 1 to 3 how urgently the message should be presented to the therapist.
+            Given the above previous decisions on urgency, and assuming that the patient has a session scheduled within 2 weeks, as the secretary working for a therapist, determine on a scale of 1 to 3 how urgently the message should be presented to the therapist.
             1 would be normal updates from a client to their existing therapist on their mental health and well-being that should wait to be discussed in the next session.
             2 is somewhat urgent and should be addressed before the clients next session.
             3 represents an emergency that should be responded to as soon as possible.
 
-            Explain the reason the urgency was selected.';
+            Explain the reason your urgency was selected.';
         return $prompt;
     }
 
@@ -47,14 +47,13 @@ class SecondOpinionGPTAction extends GPTAction
      */
     public function function(): Closure
     {
-        return function ($urgency, $reason): mixed {
+        return function ($urgency, $reason): void {
             $this->message->analysis()->create([
                 'provider' => Analysis::PROVIDER_GPT4,
                 'raw_response' => $urgency,
-                'interpreted_value' => $urgency,
+                'interpreted_value' => $urgency, //Pending interpreter implementation
                 'llm_reasoning' => $reason,
             ]);
-            return ['urgency' => $urgency, 'reason' => $reason];
         };
     }
 

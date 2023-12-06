@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\AnalysisException;
 use App\Models\Message;
 use App\Services\GptAnalysisService;
 use Illuminate\Bus\Queueable;
@@ -28,6 +29,11 @@ class ProcessMessageJob implements ShouldQueue
     public function handle(): void
     {
         $service = new GptAnalysisService($this->message);
-        $service->processMessage();
+        try {
+            $service->processMessage();
+            $service->analysisSuccessful($this->message);
+        } catch (AnalysisException $exception) {
+            $service->analysisFailed($this->message);
+        }
     }
 }

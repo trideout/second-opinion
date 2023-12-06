@@ -1,22 +1,21 @@
 <?php
 namespace App\Services;
 
+use App\Events\AnalysisCompleteEvent;
+use App\Exceptions\AnalysisException;
 use App\GPT\Actions\SecondOpinionGpt\SecondOpinionGPTAction;
 use App\Models\Analysis;
 use App\Models\Message;
 
-class GptAnalysisService implements AnalysisInterface {
+class GptAnalysisService extends AbstractAnalysis {
     public function __construct(protected Message $message) {}
 
-    public function processMessage(): Analysis
+    public function processMessage(): void
     {
-        SecondOpinionGPTAction::make($this->message)->send($this->message->message_text);
-        $this->analysisSuccessful();
-        return $this->message->analysis;
-    }
-
-    private function analysisSuccessful() : void {
-        $this->message->analysis_status = Message::STATUS_PROCESSED;
-        $this->message->save();
+        try {
+            SecondOpinionGPTAction::make($this->message)->send($this->message->message_text);
+        } catch (\Exception $exception) {
+            throw new AnalysisException($exception->getMessage());
+        }
     }
 }
