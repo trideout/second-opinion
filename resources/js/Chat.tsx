@@ -10,7 +10,7 @@ type Message = {
   timestamp: number,
   status: 0 | 1 | 2,
   analysis: {
-    value?: 1 | 2 | 3,
+    value?: number,
     reasoning?: string,
   }
 }
@@ -64,6 +64,8 @@ export function Chat() {
       setMessages(previous => {
         const existing = previous.find(({ content }) => content === message.content)
 
+        console.log(message.content)
+
         if (existing) {
           // analysis came in
           return previous.map(m => {
@@ -85,13 +87,16 @@ export function Chat() {
         <div className="flex items-center w-full gap-2">
           <img src="/logo-icon.png" className="w-10 h-10" />
           <div className="flex flex-col">
-            <h2 className="font-semibold">{isTherapist ? 'My Client' : 'My Therapist'}</h2>
+            <h2 className="font-semibold">{isTherapist ? 'Live chat with Client' : 'Live chat with Therapist'}</h2>
             <span className="text-xs text-gray-500">Online</span>
+          </div>
+          <div className="flex items-center justify-center w-10 h-10 ml-auto text-lg font-bold rounded-full bg-beige-300 text-primary-800">
+            {isTherapist ? 'T' : 'C'}
           </div>
         </div>
       </header>
       <main
-        className="flex flex-col flex-1 gap-4 overflow-x-hidden overflow-y-auto bg-white"
+        className="relative flex flex-col flex-1 gap-4 overflow-x-hidden overflow-y-auto bg-white"
       >
         <div ref={messageContainerRef} className="relative flex flex-col gap-4 px-4 py-6 ">
           {isTherapist && <div className="absolute top-0 bottom-0 left-0 w-1.5 h-full" ref={gradientRef}></div>}
@@ -103,7 +108,7 @@ export function Chat() {
               id={id}
               className={clsx(
                 'flex items-end gap-2',
-                author === currentUserId && 'ml-auto flex-row-reverse',
+                author === currentUserId && 'flex-row-reverse',
               )}
             >
               <div className={clsx(
@@ -138,7 +143,8 @@ export function Chat() {
               {
                 author !== currentUserId && isTherapist && (
                   <div className="flex flex-col items-center justify-start min-h-full gap-2 py-2">
-                    {analysis?.value
+                    {/* @ts-expect-error */}
+                    {analysis?.value > -1
                       ? (
                         <button type="button" onClick={() => {
                           setDrawerContent(analysis.reasoning || '')
@@ -146,6 +152,8 @@ export function Chat() {
                           'w-4 h-4 rounded-full',
                           (() => {
                             switch (analysis.value) {
+                              case 0:
+                                return 'bg-white ring-inset ring-2 ring-gray-400'
                               case 1:
                                 return 'bg-green-500'
                               case 2:
@@ -175,8 +183,6 @@ export function Chat() {
       <ChatFooter
         currentUserId={currentUserId}
         onNewMessage={
-          
-
           newMessage => {
             channel.current?.postMessage(newMessage)
             
@@ -199,10 +205,15 @@ export function Chat() {
                 content: message.message_text,
                 status: message.analysis_status, 
                 timestamp: new Date(message.created_at).getTime(),
-                analysis: {
-                  value: Number(message.analysis.interpreted_value),
-                  reasoning: message.analysis.llm_reasoning,
-                },
+                analysis: message.analysis
+                  ? {
+                    value: Number(message.analysis.interpreted_value),
+                    reasoning: message.analysis.llm_reasoning,
+                  }
+                  : {
+                    value: 0,
+                    reasoning: 'Error while processing message',
+                  },
               })
             })()
           }
@@ -218,7 +229,7 @@ function ChatDrawer({ content, unsetContent }: { content: string, unsetContent: 
       'fixed bottom-0 left-0 right-0 z-10 p-4 bg-white shadow-lg h-[calc(33vh)] w-screen transition duration-150 ease-in-out border-t border-gray-3000',
       content ? 'translate-y-0' : 'translate-y-full',
     )}>
-      <div className="relative flex flex-col w-full gap-4">
+      <div className="relative flex flex-col w-full max-h-full gap-4">
         <button
           type="button"
           onClick={unsetContent}
@@ -226,7 +237,7 @@ function ChatDrawer({ content, unsetContent }: { content: string, unsetContent: 
         >
           <IconX />
         </button>
-        <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
+        <div className="flex flex-col flex-1 gap-4 p-4 overflow-y-scroll">
           <h3 className="text-lg font-semibold">📝 Second opinion</h3>
           <p className="text-sm">{content}</p>
         </div>
@@ -262,7 +273,10 @@ function ChatFooter({ onNewMessage, currentUserId }: { onNewMessage: (newMessage
       author: currentUserId,
       timestamp: Date.now(),
       status: 0,
-      analysis: {},
+      analysis: {
+        value: -1,
+        reasoning: 'Loading',
+      },
     })
 
     setContent('')
@@ -399,10 +413,15 @@ async function getMessages() {
     content: message_text,
     status: analysis_status, 
     timestamp: new Date(created_at).getTime(),
-    analysis: {
-      value: Number(analysis.interpreted_value),
-      reasoning: analysis.llm_reasoning,
-    },
+    analysis: analysis
+      ? {
+        value: Number(analysis.interpreted_value),
+        reasoning: analysis.llm_reasoning,
+      }
+      : {
+        value: 0,
+        reasoning: 'Error while processing message',
+      },
   }));
 }
 
