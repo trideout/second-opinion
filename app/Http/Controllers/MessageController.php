@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessMessageJob;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
@@ -23,6 +24,8 @@ class MessageController extends Controller
             'message_text' => $request['message_text'],
             'analysis_status' => Message::STATUS_UNPROCESSED,
         ]);
+
+        dispatch(new ProcessMessageJob($message));
 
         return response()->json($message);
     }

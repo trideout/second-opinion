@@ -1,6 +1,9 @@
 <?php
 namespace App\Services;
 
+use App\Models\Message;
+
 interface AnalysisInterface {
-    public function processMessage(\App\Models\Message $message);
+    public function __construct(Message $message);
+    public function processMessage();
 }

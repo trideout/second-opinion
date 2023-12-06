@@ -6,12 +6,11 @@ use App\Models\Analysis;
 use App\Models\Message;
 
 class GptAnalysisService implements AnalysisInterface {
-    protected Message $message;
-    protected $response;
-    public function processMessage(Message $message): Analysis
+    public function __construct(protected Message $message) {}
+
+    public function processMessage(): Analysis
     {
-        $this->message = $message;
-        SecondOpinionGPTAction::make($message)->send($message->message_text);
+        SecondOpinionGPTAction::make($this->message)->send($this->message->message_text);
         return $this->message->analysis;
     }
 }
