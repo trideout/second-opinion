@@ -14,6 +14,8 @@ class Message extends Model
 
     use HasFactory;
 
+    const STATUS_UNPROCESSED = 0;
+
     protected $fillable = [
         'message_text',
         'analysis_status',
