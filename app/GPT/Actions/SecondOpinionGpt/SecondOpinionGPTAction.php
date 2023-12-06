@@ -20,14 +20,19 @@ class SecondOpinionGPTAction extends GPTAction
      */
     public function systemMessage(): ?string
     {
+        $previousDecisions = Opinion::all()->map(function($row) {
+            return 'Message: "' . $row->message . '" Urgency: ' . $row->urgency;
+        })->implode(PHP_EOL);
         $prompt = '
-            Previous Decisions: ' . Opinion::all()->toJson() . '
+            Previous Decisions:
+            ' . $previousDecisions . '
 
             Given the above previous decisions on urgency, and assuming that the patient has a
             session scheduled within 2 weeks, as a secretary working for a
             therapist determine on a scale of 1 to 3 how time critical a response
             to the message from a client to a therapist is. 1 would be basic communication
-            from a client. 2 is somewhat urgent and should be addressed before the
+            from a client on their mental health and well-being that can wait to be discussed
+            in the next session. 2 is somewhat urgent and should be addressed before the
             clients next session. 3 represents an emergency that should
             be responded to as soon as possible. Explain the reason the urgency was selected.';
         return $prompt;
