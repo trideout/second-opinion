@@ -10,7 +10,7 @@ class MessageController extends Controller
 {
     public function index()
     {
-        $messages = Message::all();
+        $messages = Message::with('analysis')->get();
         return response()->json($messages);
     }
 
@@ -48,6 +48,7 @@ class MessageController extends Controller
 
     public function show(Message $message)
     {
+        $message->load('analysis');
         return response()->json($message);
     }
 }
