@@ -20,6 +20,7 @@ return new class extends Migration
 
         Schema::create('analyses', function (Blueprint $table) {
             $table->id();
+            $table->integer('message_id');
             $table->integer('provider');
             $table->text('raw_response');
             $table->text('interpreted_value');

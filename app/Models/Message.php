@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Message extends Model
 {
@@ -23,7 +24,7 @@ class Message extends Model
         'analysis_status' => self::STATUS_UNPROCESSED,
     ];
 
-    public function analysis(): BelongsTo {
-        return $this->belongsTo(Analysis::class);
+    public function analysis(): HasOne {
+        return $this->hasOne(Analysis::class);
     }
 }

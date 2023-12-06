@@ -18,7 +18,7 @@ class Analysis extends Model
         'interpreted_value',
     ];
 
-    public function message(): HasOne {
-        return $this->hasOne(Message::class);
+    public function message(): BelongsTo {
+        return $this->belongsTo(Message::class);
     }
 }
