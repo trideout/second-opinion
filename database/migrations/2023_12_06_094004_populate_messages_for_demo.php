@@ -35,6 +35,7 @@ return new class extends Migration
             'When will I be "fixed"?',
             'Why does no one understand me but you?',
             'Can you help me?',
+            'I just caught my partner cheating on me! Can I please talk to you right now?',
             'My relationship is in shambles. What am I doing wrong?',
             'I\'m so lonely, how do I make friends?',
             'I feel like my wife doesn\'t love me anymore. How do I reignite that spark we used to have?',
@@ -44,6 +45,8 @@ return new class extends Migration
             'Do you feel that therapy is helping me?',
             'How often can we meet?',
             'Can we hang out as friends?',
+            'Are my questions being monitored and accessed for urgency?',
+            'My dog just died. How do I dispose of the body?',
             'Do you think that birds are real? I have been hearing that they are actually surveillance drones flown by the government?',
         ]);
         $questions->each(function ($question) {
