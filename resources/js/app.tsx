@@ -1,16 +1,22 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import { Chat } from './Chat';
+import '../css/app.css';
+import '@fontsource/inter/300.css'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
 
 const App = () => {
     return (
-        <div>Hello world (this is React)</div>
+        <Chat></Chat>
     );
 };
 
-// This line will render your app in the element with id 'app'.
-// Ensure this element exists in your Laravel blade template.
 if (document.getElementById('app')) {
-    ReactDOM.render(<App />, document.getElementById('app'));
+    createRoot(document.getElementById('app'))
+      .render(<App />);
 }
 
 export default App;
